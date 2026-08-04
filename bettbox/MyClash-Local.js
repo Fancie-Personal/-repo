@@ -2,8 +2,9 @@
  * MyClash-Local — 基于 AIsouler/MyClash 全量版的本地定制覆写
  * 不要绑定远程 URL，避免同步覆盖本地修改。
  * 上游原版：https://github.com/AIsouler/MyClash
- * 本地补丁：微信/微软 fake-ip 排除、Minecraft/Xbox/biubiu 进程与域名直连
+ * 本地补丁：微信/微软 fake-ip 排除、Minecraft/Xbox/biubiu/原神B服进程与域名直连
  * 网络策略：默认开 TUN；浏览器走系统代理（缓解 arena.ai 等站点的 Cloudflare 拦截）
+ * 机场 DNS：保留订阅全部 hosts；aws-agent/apt-agent 走直连 DNS（对齐官方 2.2/hosts 合并）
  */
 
 /**
@@ -1192,6 +1193,9 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.mihoyo.com',
       '+.hoyoverse.com',
       '+.hg-cdn.com',
+      // 花云等中转/专线入口：禁止 fake-ip，配合 hosts / 私有 DNS 解析到专线
+      '+.aws-agent.com',
+      '+.apt-agent.dev',
     ],
     'proxy-server-nameserver': [...chinaDNS, ...privateDNS],
     ...(Object.keys(proxyServerPolicy).length > 0 && {
@@ -1201,15 +1205,16 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     nameserver: [...foreignDNS],
     'nameserver-policy': {
       'rule-set:cn': [...chinaDNS],
+      // 节点入口域名用国内 DNS 直连解析（官方建议 2.2 的合并思路）
+      '+.aws-agent.com': [...chinaDNS],
+      '+.apt-agent.dev': [...chinaDNS],
+      ...proxyServerPolicy,
     },
     'direct-nameserver': ['system', '223.5.5.5', '119.29.29.29'],
   };
 
-  // 提取订阅 hosts 中与节点域名对应的记录
+  // 保留订阅全部 hosts（花云等用 hosts 映射专线入口；过滤会丢映射导致透传 IP）
   const originalHosts = config.hosts || {};
-  const proxyServerHosts = Object.fromEntries(
-    Object.entries(originalHosts).filter(([domain]) => matchDomainPattern(domain, proxyDomains)),
-  );
 
   const hosts = {
     'dns.alidns.com': ['223.5.5.5', '223.6.6.6'],
@@ -1220,14 +1225,14 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     // 解决谷歌商店无法下载的问题
     'services.googleapis.cn': ['services.googleapis.com'],
 
-    // 屏蔽哔哩哔哩PCDN，解决访问视频/直播卡顿问题
+    // 机场 hosts 优先合并进来（含 aws-agent → apt-agent 等）
+    ...originalHosts,
+
+    // 屏蔽哔哩哔哩PCDN，解决访问视频/直播卡顿问题（放在机场 hosts 之后，避免被覆盖）
     '+.mcdn.bilivideo.com': ['0.0.0.0'],
     '+.mcdn.bilivideo.cn': ['0.0.0.0'],
     '+.edge.mountaintoys.cn': ['0.0.0.0'],
     '+.h2.smtcdns.net': ['0.0.0.0'],
-
-    // 保留机场用于节点解析的 hosts
-    ...proxyServerHosts,
   };
 
   return { dns, hosts };
