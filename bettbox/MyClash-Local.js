@@ -84,6 +84,19 @@ const directRules = [
   'PROCESS-NAME,aim_plugin.exe,直连',
   'PROCESS-NAME,bbupdate.exe,直连',
 
+  // 原神 B服 / bilibili 游戏登录 / 米哈游启动器
+  'PROCESS-NAME,YuanShen.exe,直连',
+  'PROCESS-NAME,StarRail.exe,直连',
+  'PROCESS-NAME,ZenlessZoneZero.exe,直连',
+  'PROCESS-NAME,BH3.exe,直连',
+  'PROCESS-NAME,PCGamePlatform.exe,直连',
+  'PROCESS-NAME,game_security_protection.exe,直连',
+  'PROCESS-NAME,ZFGameBrowser.exe,直连',
+  'PROCESS-NAME,HYP.exe,直连',
+  'PROCESS-NAME,HYPHelper.exe,直连',
+  'PROCESS-NAME,HYUpdater.exe,直连',
+  'PROCESS-NAME,launcher.exe,直连',
+
   // Xbox / Minecraft 域名直连
   'DOMAIN-SUFFIX,xboxlive.com,直连',
   'DOMAIN-SUFFIX,xbox.com,直连',
@@ -93,6 +106,17 @@ const directRules = [
   'DOMAIN-SUFFIX,minecraftservices.com,直连',
   'DOMAIN-SUFFIX,playfabapi.com,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
+
+  // 原神 B服 / bilibili / 米哈游（走代理会「网络错误」）
+  'DOMAIN-SUFFIX,biligame.com,直连',
+  'DOMAIN-SUFFIX,biligame.net,直连',
+  'DOMAIN-SUFFIX,bilibili.com,直连',
+  'DOMAIN-SUFFIX,biliapi.net,直连',
+  'DOMAIN-SUFFIX,biliapi.com,直连',
+  'DOMAIN-SUFFIX,mihoyo.com,直连',
+  'DOMAIN-SUFFIX,mihayo.com,直连',
+  'DOMAIN-SUFFIX,hoyoverse.com,直连',
+  'DOMAIN-SUFFIX,hg-cdn.com,直连',
 
   // 国内直连
   'RULE-SET,games_cn,直连', // 已包含 steam 下载域名
@@ -1159,6 +1183,15 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.minecraftservices.com',
       '+.playfabapi.com',
       '+.playfab.com',
+      // 原神 B服 / bilibili / 米哈游
+      '+.biligame.com',
+      '+.biligame.net',
+      '+.bilibili.com',
+      '+.biliapi.net',
+      '+.biliapi.com',
+      '+.mihoyo.com',
+      '+.hoyoverse.com',
+      '+.hg-cdn.com',
     ],
     'proxy-server-nameserver': [...chinaDNS, ...privateDNS],
     ...(Object.keys(proxyServerPolicy).length > 0 && {
