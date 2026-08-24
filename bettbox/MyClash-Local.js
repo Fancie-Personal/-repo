@@ -4,7 +4,7 @@
  * 上游原版：https://github.com/AIsouler/MyClash
  * 本地补丁：微信/微软/Xbox/原神B服 fake-ip 排除与进程直连；花云 hosts/入口 DNS 加固
  * 网络策略：默认开 TUN；浏览器建议不进 TUN（走系统代理，缓解 Cloudflare）
- * 同步自上游日期：2026-08-20
+ * 同步自上游日期：2026-08-25
  */
 
 /**
@@ -32,16 +32,18 @@ const ruleOptionsEnable = {
   负载均衡: true, // 是否启用负载均衡策略组
 
   // 以下为分流策略配置
-  AI: true, // 国外AI服务
-  Media: true, // 国外视频平台
   FCM: true, // GoogleFCM服务
+  YouTube: true, // YouTube视频平台
   Google: true, // Google服务
+  AI: true, // 国外AI服务
   Microsoft: true, // Microsoft服务
   Apple: true, // Apple服务
   Telegram: true, // Telegram通讯软件
   Steam: true, // Steam游戏平台
   TikTok: true, // TikTok视频平台
   Twitter: true, // Twitter社交平台
+  Instagram: true, // Instagram社交平台
+  Netflix: true, // Netflix视频平台
   Emby: true, // Emby媒体服务
   PikPak: true, // PikPak网盘服务
   Spotify: true, // Spotify音乐服务
@@ -70,36 +72,26 @@ const prefixRules = [
   // Minecraft Bedrock / Xbox / biubiu
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
-  'PROCESS-NAME,gamingservices.exe,直连',
-  'PROCESS-NAME,gamingservicesnet.exe,直连',
   'PROCESS-NAME,GamingServices.exe,直连',
+  'PROCESS-NAME,gamingservices.exe,直连',
   'PROCESS-NAME,XboxPcApp.exe,直连',
   'PROCESS-NAME,XboxPcAppFT.exe,直连',
   'PROCESS-NAME,XboxApp.exe,直连',
-  'PROCESS-NAME,XboxAppServices.exe,直连',
   'PROCESS-NAME,GameBar.exe,直连',
-  'PROCESS-NAME,GameBarPresenceWriter.exe,直连',
   'PROCESS-NAME,biubiu.exe,直连',
   'PROCESS-NAME,biubiu_nets_proxy.exe,直连',
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
-  'PROCESS-NAME,dighole_proxy.exe,直连',
-  'PROCESS-NAME,uot_client.exe,直连',
-  'PROCESS-NAME,aim_plugin.exe,直连',
-  'PROCESS-NAME,bbupdate.exe,直连',
 
-  // 原神 B服 / bilibili 游戏 / 米哈游启动器
+  // 原神 B服 / bilibili 游戏 / 米哈游启动器（不写 launcher.exe，避免误伤其他启动器）
   'PROCESS-NAME,YuanShen.exe,直连',
   'PROCESS-NAME,StarRail.exe,直连',
   'PROCESS-NAME,ZenlessZoneZero.exe,直连',
   'PROCESS-NAME,BH3.exe,直连',
   'PROCESS-NAME,PCGamePlatform.exe,直连',
-  'PROCESS-NAME,game_security_protection.exe,直连',
-  'PROCESS-NAME,ZFGameBrowser.exe,直连',
   'PROCESS-NAME,HYP.exe,直连',
   'PROCESS-NAME,HYPHelper.exe,直连',
   'PROCESS-NAME,HYUpdater.exe,直连',
-  'PROCESS-NAME,launcher.exe,直连',
 
   // Xbox / Minecraft 域名
   'DOMAIN-SUFFIX,xboxlive.com,直连',
@@ -108,7 +100,6 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft.net,直连',
   'DOMAIN-SUFFIX,mojang.com,直连',
   'DOMAIN-SUFFIX,minecraftservices.com,直连',
-  'DOMAIN-SUFFIX,playfabapi.com,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
 
   // 原神 B服 / bilibili / 米哈游
@@ -116,11 +107,8 @@ const prefixRules = [
   'DOMAIN-SUFFIX,biligame.net,直连',
   'DOMAIN-SUFFIX,bilibili.com,直连',
   'DOMAIN-SUFFIX,biliapi.net,直连',
-  'DOMAIN-SUFFIX,biliapi.com,直连',
   'DOMAIN-SUFFIX,mihoyo.com,直连',
-  'DOMAIN-SUFFIX,mihayo.com,直连',
   'DOMAIN-SUFFIX,hoyoverse.com,直连',
-  'DOMAIN-SUFFIX,hg-cdn.com,直连',
 
   // 国内直连
   'RULE-SET,games_cn,直连', // 已包含 steam 下载域名
@@ -161,7 +149,7 @@ const dialerProxyName = '链式中转';
 
 // 定义全局排除节点的正则表达式，用于排除非地区节点
 const excludeFilter =
-  /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|访问|支持|教程|关注|更新|作者|加入|超时|收藏|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|建议|重置|以下|⚠️|@|\bexpire\b|\bhttps?:\/\/|\.com|\btraffic\b/iu;
+  /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|电报|无法|说明|使用|提示|访问|支持|教程|关注|更新|作者|加入|超时|收藏|优惠|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|建议|重置|以下|⚠️|@|t\.me\/\+|\bexpire\b|\bhttps?:\/\/|\.com|\btraffic\b/iu;
 
 // 屏蔽国外QUIC
 const blockForeignQuic = [
@@ -418,101 +406,6 @@ const baseGroups = [
 const serviceConfigs = [
   ...baseGroups,
   {
-    name: 'AI',
-    baseOption: selectBaseOption,
-    defaultSelected: '美国',
-    providers: {
-      ai: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs',
-        path: './ruleset/ai.mrs',
-        'path-in-bundle': 'geo/geosite/category-ai-!cn.mrs',
-      },
-    },
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
-    rules: ['RULE-SET,ai,AI'],
-  },
-  {
-    name: 'Media',
-    baseOption: selectBaseOption,
-    defaultSelected: '日本',
-    providers: {
-      youtube: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/youtube.mrs',
-        path: './ruleset/youtube.mrs',
-        'path-in-bundle': 'geo/geosite/youtube.mrs',
-      },
-      instagram: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/instagram.mrs',
-        path: './ruleset/instagram.mrs',
-        'path-in-bundle': 'geo/geosite/instagram.mrs',
-      },
-      netflix: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/netflix.mrs',
-        path: './ruleset/netflix.mrs',
-        'path-in-bundle': 'geo/geosite/netflix.mrs',
-      },
-      netflix_ip: {
-        ...ruleProviderCommonIpcidr,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs',
-        path: './ruleset/netflix_ip.mrs',
-        'path-in-bundle': 'geo/geoip/netflix.mrs',
-      },
-      hbo: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/hbo.mrs',
-        path: './ruleset/hbo.mrs',
-        'path-in-bundle': 'geo/geosite/hbo.mrs',
-      },
-      twitch: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/twitch.mrs',
-        path: './ruleset/twitch.mrs',
-        'path-in-bundle': 'geo/geosite/twitch.mrs',
-      },
-      disney: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/disney.mrs',
-        path: './ruleset/disney.mrs',
-        'path-in-bundle': 'geo/geosite/disney.mrs',
-      },
-      niconico: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/niconico.mrs',
-        path: './ruleset/niconico.mrs',
-        'path-in-bundle': 'geo/geosite/niconico.mrs',
-      },
-      bbc: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/bbc.mrs',
-        path: './ruleset/bbc.mrs',
-        'path-in-bundle': 'geo/geosite/bbc.mrs',
-      },
-      pornhub: {
-        ...ruleProviderCommonDomain,
-        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/pornhub.mrs',
-        path: './ruleset/pornhub.mrs',
-        'path-in-bundle': 'geo/geosite/pornhub.mrs',
-      },
-    },
-    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ForeignMedia.png',
-    rules: [
-      'RULE-SET,youtube,Media',
-      'RULE-SET,instagram,Media',
-      'RULE-SET,netflix,Media',
-      'RULE-SET,netflix_ip,Media,no-resolve',
-      'RULE-SET,hbo,Media',
-      'RULE-SET,twitch,Media',
-      'RULE-SET,disney,Media',
-      'RULE-SET,niconico,Media',
-      'RULE-SET,bbc,Media',
-      'RULE-SET,pornhub,Media',
-    ],
-  },
-  {
     name: 'FCM',
     baseOption: selectBaseOption,
     direct: true,
@@ -527,6 +420,20 @@ const serviceConfigs = [
     },
     icon: 'https://fastly.jsdelivr.net/gh/MiToverG422/Qure@master/IconSet/Color/fcm.png',
     rules: ['RULE-SET,googlefcm,FCM'],
+  },
+  {
+    name: 'YouTube',
+    baseOption: selectBaseOption,
+    providers: {
+      youtube: {
+        ...ruleProviderCommonDomain,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/youtube.mrs',
+        path: './ruleset/youtube.mrs',
+        'path-in-bundle': 'geo/geosite/youtube.mrs',
+      },
+    },
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/YouTube.png',
+    rules: ['RULE-SET,youtube,YouTube'],
   },
   {
     name: 'Google',
@@ -547,6 +454,21 @@ const serviceConfigs = [
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google_Search.png',
     rules: ['RULE-SET,google,Google', 'RULE-SET,google_ip,Google,no-resolve'],
+  },
+  {
+    name: 'AI',
+    baseOption: selectBaseOption,
+    defaultSelected: '美国',
+    providers: {
+      ai: {
+        ...ruleProviderCommonDomain,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ai-!cn.mrs',
+        path: './ruleset/ai.mrs',
+        'path-in-bundle': 'geo/geosite/category-ai-!cn.mrs',
+      },
+    },
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/ChatGPT.png',
+    rules: ['RULE-SET,ai,AI'],
   },
   {
     name: 'Microsoft',
@@ -653,6 +575,40 @@ const serviceConfigs = [
     },
     icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Twitter.png',
     rules: ['RULE-SET,twitter,Twitter', 'RULE-SET,twitter_ip,Twitter,no-resolve'],
+  },
+  {
+    name: 'Instagram',
+    baseOption: selectBaseOption,
+    providers: {
+      instagram: {
+        ...ruleProviderCommonDomain,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/instagram.mrs',
+        path: './ruleset/instagram.mrs',
+        'path-in-bundle': 'geo/geosite/instagram.mrs',
+      },
+    },
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Instagram.png',
+    rules: ['RULE-SET,instagram,Instagram'],
+  },
+  {
+    name: 'Netflix',
+    baseOption: selectBaseOption,
+    providers: {
+      netflix: {
+        ...ruleProviderCommonDomain,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/netflix.mrs',
+        path: './ruleset/netflix.mrs',
+        'path-in-bundle': 'geo/geosite/netflix.mrs',
+      },
+      netflix_ip: {
+        ...ruleProviderCommonIpcidr,
+        url: 'https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs',
+        path: './ruleset/netflix_ip.mrs',
+        'path-in-bundle': 'geo/geoip/netflix.mrs',
+      },
+    },
+    icon: 'https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Netflix.png',
+    rules: ['RULE-SET,netflix,Netflix', 'RULE-SET,netflix_ip,Netflix,no-resolve'],
   },
   {
     name: 'Emby',
@@ -937,7 +893,7 @@ function createRegionGroup(name, icon, proxies) {
         ...selectBaseOption,
         name,
         icon,
-        proxies: [urlTestName, ...proxies],
+        proxies: [...proxies, urlTestName],
         hidden: hideManualSelectGroupEnabled,
       },
     ];
@@ -1390,6 +1346,13 @@ function stripDnsSuffix(dns) {
 }
 
 /**
+ * 判断节点 server 是否为 IP 地址（IPv4 / IPv6），用于从节点域名集合中排除 IP 类型的 server
+ */
+function isIpAddress(server) {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(server) || server.includes(':');
+}
+
+/**
  * 构建 DNS 与 hosts：保留私有 DNS、节点域名 policy/fake-ip-filter，并按 hosts 改写节点 server
  */
 function buildDnsAndHostsConfig(config, filteredProxies) {
@@ -1417,18 +1380,13 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
   // 根据订阅 hosts 改写节点 server 为映射后的地址（域名或 IP）
   const mappedProxies = shouldRewriteByHosts ? applyHostsToProxies(filteredProxies, config.hosts) : filteredProxies;
 
-  // 原节点域名（改写前）
-  const originalProxyDomains = new Set(
-    filteredProxies.filter((proxy) => typeof proxy.server === 'string').map((proxy) => proxy.server.toLowerCase()),
+  // 节点域名集合
+  const proxyDomains = new Set(
+    mappedProxies
+      .filter((proxy) => typeof proxy.server === 'string')
+      .map((proxy) => proxy.server.toLowerCase())
+      .filter((server) => !isIpAddress(server)),
   );
-
-  // 合并改写前/后的节点域名；未执行 hosts 改写时两者一致，直接复用原域名集合避免冗余操作
-  const proxyDomains = shouldRewriteByHosts
-    ? new Set([
-        ...originalProxyDomains,
-        ...mappedProxies.filter((proxy) => typeof proxy.server === 'string').map((proxy) => proxy.server.toLowerCase()),
-      ])
-    : originalProxyDomains;
 
   // 命中触发条件时，私有 DNS 提取时直接置空，避免本地监听 DNS 被误留为私有 DNS
   const privateProxyServerNameservers = shouldRewriteByHosts ? [] : proxyServerNameservers;
@@ -1459,6 +1417,13 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     proxyServerPolicy[domain] = value;
   }
 
+  // 无节点专属 DNS 策略且存在私有 DNS 时，将节点域名统一映射到私有 DNS
+  if (privateDNS.length > 0 && Object.keys(proxyServerPolicy).length === 0) {
+    for (const domain of proxyDomains) {
+      proxyServerPolicy[domain] = privateDNS;
+    }
+  }
+
   // 遍历原配置中的 fake-ip-filter，保留与节点域名匹配的条目
   // 部分机场的节点域名需走真实 IP 解析，避免 fake-ip 导致节点无法连接
   const originalFakeIpFilter = originalDnsConfig['fake-ip-filter'] || [];
@@ -1482,17 +1447,12 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       'rule-set:cn',
       'rule-set:geolocation-cn',
       'rule-set:cn_additional',
-      // WeChat / QQ
+      // 用后缀匹配，避免罗列已被覆盖的子域
       '+.qq.com',
       '+.weixin.qq.com',
       '+.wechat.com',
-      '+.servicewechat.com',
-      '+.tenpay.com',
-      '+.qpic.cn',
-      '+.qlogo.cn',
       '+.tencent.com',
-      '+.gtimg.cn',
-      // Microsoft / Outlook / Windows Update / Xbox / Minecraft
+      '+.tenpay.com',
       '+.microsoft.com',
       '+.microsoftonline.com',
       '+.windows.com',
@@ -1500,35 +1460,20 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.office.com',
       '+.office365.com',
       '+.live.com',
-      '+.msn.com',
-      '+.azure.com',
-      '+.azureedge.net',
-      '+.delivery.mp.microsoft.com',
-      '+.update.microsoft.com',
-      '+.dl.delivery.mp.microsoft.com',
       '+.xbox.com',
       '+.xboxlive.com',
-      '+.xboxservices.com',
       '+.minecraft.net',
       '+.mojang.com',
-      '+.minecraftservices.com',
-      '+.playfabapi.com',
       '+.playfab.com',
-      // 原神 B服 / bilibili / 米哈游
       '+.biligame.com',
-      '+.biligame.net',
       '+.bilibili.com',
-      '+.biliapi.net',
-      '+.biliapi.com',
       '+.mihoyo.com',
       '+.hoyoverse.com',
-      '+.hg-cdn.com',
-      // 花云等中转/专线入口
       '+.aws-agent.com',
       '+.apt-agent.dev',
       ...proxyFakeIpFilter,
     ],
-    'proxy-server-nameserver': privateDNS.length > 0 ? privateDNS : chinaDohDNS,
+    'proxy-server-nameserver': chinaDohDNS,
     ...(Object.keys(proxyServerPolicy).length > 0 && {
       'proxy-server-nameserver-policy': proxyServerPolicy,
     }),
@@ -1536,7 +1481,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     nameserver: foreignDNS,
     'nameserver-policy': {
       'rule-set:cn': chinaDNS,
-      // 花云入口域名用国内 DNS 直连解析（对齐官方 2.2）
+      // 花云入口走国内 DNS（对齐官方 2.2）
       '+.aws-agent.com': chinaDNS,
       '+.apt-agent.dev': chinaDNS,
       ...proxyServerPolicy,
