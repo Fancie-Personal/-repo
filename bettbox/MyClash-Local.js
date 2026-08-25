@@ -2,7 +2,7 @@
  * MyClash-Local — 基于 AIsouler/MyClash 全量版的本地定制覆写
  * 不要绑定会覆盖本地修改的上游自动同步；需要上游更新时再手工合并。
  * 上游原版：https://github.com/AIsouler/MyClash
- * 本地补丁：微信/微软/Xbox/原神B服/Steam 直连给 biubiu；花云 hosts/入口 DNS 加固
+ * 本地补丁：微信/微软/Xbox/原神B服；Steam 游戏给 biubiu、商店网页留在 TUN；花云 hosts/入口 DNS 加固
  * 网络策略：默认开 TUN；浏览器建议不进 TUN（走系统代理，缓解 Cloudflare）
  * 同步自上游日期：2026-08-25
  */
@@ -83,7 +83,8 @@ const prefixRules = [
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
 
-  // Steam：直连后由 biubiu 接管，不要进机场隧道
+  // Steam：游戏进程直连给 biubiu；steamwebhelper（商店 CEF）也走直连出口，但必须留在 TUN 里
+  // 否则 biubiu 会把商店 HTTPS/QUIC 打成 Steam -324
   'PROCESS-NAME,steam.exe,直连',
   'PROCESS-NAME,steamwebhelper.exe,直连',
   'PROCESS-NAME,SteamService.exe,直连',
