@@ -58,7 +58,7 @@ const ruleOptionsEnable = {
   分流组添加所有节点: false, // 是否为分流策略组添加所有节点
   过滤高倍率节点: false, // 是否过滤高倍率节点
   过滤非地区节点: true, // 是否过滤非地区节点
-  屏蔽国外QUIC: true, // 是否屏蔽国外QUIC流量
+  屏蔽国外QUIC: true, // 国外 UDP/443：走默认代理（不要 REJECT，Steam CEF 会 -324）
   代理IPV4优先: false, // 是否将订阅节点统一为 IPv4 优先（与“代理IPV6优先”同时开启时不生效）
   代理IPV6优先: false, // 是否将订阅节点统一为 IPv6 优先（与“代理IPV4优先”同时开启时不生效）
   链式代理: false, // 是否启用链式代理（自定义节点作为落地节点，经“链式中转”策略组中转）
@@ -83,9 +83,8 @@ const prefixRules = [
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
 
-  // Steam：游戏进程直连给 biubiu。不要给 steamwebhelper 加 PROCESS-NAME 直连——
-  // 它会排在「屏蔽国外QUIC」前面，把商店 HTTP/3 送进墙，页面就只剩无样式 HTML。
-  // 商店 CEF 留在 TUN；TCP 走下面的 Steam 域名直连，UDP/443 交给 QUIC 拦截以便回落到 TCP。
+  // Steam：游戏进程直连给 biubiu。商店网页（steamwebhelper）留在 TUN，TCP 走下面域名直连。
+  // 不要给 steamwebhelper 整进程直连，否则 HTTP/3 会打进墙。
   'PROCESS-NAME,steam.exe,直连',
   'PROCESS-NAME,SteamService.exe,直连',
   'PROCESS-NAME,steamerrorreporter.exe,直连',
@@ -164,9 +163,9 @@ const dialerProxyName = '链式中转';
 const excludeFilter =
   /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|电报|无法|说明|使用|提示|访问|支持|教程|关注|更新|作者|加入|超时|收藏|优惠|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|建议|重置|以下|⚠️|@|t\.me\/\+|\bexpire\b|\bhttps?:\/\/|\.com|\btraffic\b/iu;
 
-// 屏蔽国外QUIC
+// 国外 QUIC：走默认代理。REJECT 会让 Steam 商店直接 -324；直连会被墙成无样式页。
 const blockForeignQuic = [
-  'AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_additional),(RULE-SET,cn_ip,no-resolve)))))),REJECT',
+  'AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((RULE-SET,cn_additional),(RULE-SET,cn_ip,no-resolve)))))),默认代理',
 ];
 
 // 直连节点
