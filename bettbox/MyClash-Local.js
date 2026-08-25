@@ -83,10 +83,10 @@ const prefixRules = [
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
 
-  // Steam：游戏进程直连给 biubiu；steamwebhelper（商店 CEF）也走直连出口，但必须留在 TUN 里
-  // 否则 biubiu 会把商店 HTTPS/QUIC 打成 Steam -324
+  // Steam：游戏进程直连给 biubiu。不要给 steamwebhelper 加 PROCESS-NAME 直连——
+  // 它会排在「屏蔽国外QUIC」前面，把商店 HTTP/3 送进墙，页面就只剩无样式 HTML。
+  // 商店 CEF 留在 TUN；TCP 走下面的 Steam 域名直连，UDP/443 交给 QUIC 拦截以便回落到 TCP。
   'PROCESS-NAME,steam.exe,直连',
-  'PROCESS-NAME,steamwebhelper.exe,直连',
   'PROCESS-NAME,SteamService.exe,直连',
   'PROCESS-NAME,steamerrorreporter.exe,直连',
   'PROCESS-NAME,GameOverlayUI.exe,直连',
