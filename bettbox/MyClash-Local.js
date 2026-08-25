@@ -1493,12 +1493,15 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     nameserver: foreignDNS,
     'nameserver-policy': {
       'rule-set:cn': chinaDNS,
+      'rule-set:geolocation-cn': chinaDNS,
       // 花云入口走国内 DNS（对齐官方 2.2）
       '+.aws-agent.com': chinaDNS,
       '+.apt-agent.dev': chinaDNS,
       ...proxyServerPolicy,
     },
-    'direct-nameserver': ['system', ...chinaDNS],
+    // 不要用 system：TUN 网卡的系统 DNS 就是 Clash 自己（198.18.0.2），会自环，
+    // 直连域名解析超时 → 国内网站在系统代理下全部打不开。
+    'direct-nameserver': chinaDNS,
   };
 
   // 上游已按 hosts 改写节点 server；仍保留订阅全部 hosts 作双保险
