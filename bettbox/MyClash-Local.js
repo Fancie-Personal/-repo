@@ -1559,7 +1559,7 @@ function main(config) {
   newConfig['unified-delay'] = true;
   newConfig['tcp-concurrent'] = true;
   newConfig['keep-alive-interval'] = 60;
-  newConfig['find-process-mode'] = 'always';
+  newConfig['find-process-mode'] = 'strict';
 
   newConfig['external-controller'] = '127.0.0.1:9090';
   newConfig['external-ui'] = 'ui';
