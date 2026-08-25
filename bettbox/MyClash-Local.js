@@ -1491,17 +1491,18 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     }),
     'default-nameserver': chinaDNS,
     nameserver: foreignDNS,
+    // 国内域名一律走 DoH(TCP)：本机 UDP/53 出站不通（TUN/加速器占用），
+    // 明文 223.5.5.5:53 查不到结果，国内网站会全部超时。
     'nameserver-policy': {
-      'rule-set:cn': chinaDNS,
-      'rule-set:geolocation-cn': chinaDNS,
+      'rule-set:cn': chinaDohDNS,
+      'rule-set:geolocation-cn': chinaDohDNS,
       // 花云入口走国内 DNS（对齐官方 2.2）
-      '+.aws-agent.com': chinaDNS,
-      '+.apt-agent.dev': chinaDNS,
+      '+.aws-agent.com': chinaDohDNS,
+      '+.apt-agent.dev': chinaDohDNS,
       ...proxyServerPolicy,
     },
-    // 不要用 system：TUN 网卡的系统 DNS 就是 Clash 自己（198.18.0.2），会自环，
-    // 直连域名解析超时 → 国内网站在系统代理下全部打不开。
-    'direct-nameserver': chinaDNS,
+    // 不要用 system：TUN 网卡的系统 DNS 就是 Clash 自己（198.18.0.2），会自环。
+    'direct-nameserver': chinaDohDNS,
   };
 
   // 上游已按 hosts 改写节点 server；仍保留订阅全部 hosts 作双保险
