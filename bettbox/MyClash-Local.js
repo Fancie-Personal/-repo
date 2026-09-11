@@ -70,10 +70,29 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // Minecraft：基岩/Xbox/Java 都直连。MCPVP 的「最近主机」看的是 DNS 出口：
-  // 走美国 Cloudflare DNS 就会分到波特兰；用国内 DNS 才会像关掉 Bettbox 一样分到台湾。
+  // 基岩版 / Xbox / biubiu：整进程直连（必须排在 GEOIP,US 前面）
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
+  'PROCESS-NAME,GamingServices.exe,直连',
+  'PROCESS-NAME,gamingservices.exe,直连',
+  'PROCESS-NAME,XboxPcApp.exe,直连',
+  'PROCESS-NAME,XboxPcAppFT.exe,直连',
+  'PROCESS-NAME,XboxApp.exe,直连',
+  'PROCESS-NAME,GameBar.exe,直连',
+  'PROCESS-NAME,biubiu.exe,直连',
+  'PROCESS-NAME,biubiu_nets_proxy.exe,直连',
+  'PROCESS-NAME,bbservice.exe,直连',
+  'PROCESS-NAME,acchelper.exe,直连',
+
+  // Java 国际服按目的地拆：东亚直连（台湾才能探测），美国走默认代理
+  'GEOIP,TW,直连,no-resolve',
+  'GEOIP,JP,直连,no-resolve',
+  'GEOIP,SG,直连,no-resolve',
+  'GEOIP,KR,直连,no-resolve',
+  'GEOIP,PH,直连,no-resolve',
+  'GEOIP,US,默认代理,no-resolve',
+
+  // Java 启动器/进程：未命中上面 GEOIP 的剩余流量直连（正版验证、皮肤等）
   'PROCESS-NAME,MinecraftLauncher.exe,直连',
   'PROCESS-NAME,javaw.exe,直连',
   'PROCESS-NAME,java.exe,直连',
@@ -119,9 +138,6 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft-services.net,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
   'DOMAIN-SUFFIX,live.com,直连',
-  'DOMAIN-SUFFIX,mcpvp.com,直连',
-  'DOMAIN-SUFFIX,wynncraft.com,直连',
-  'DST-PORT,25565,直连',
   'DST-PORT,19132,直连',
 
   // 原神 B服 / bilibili / 米哈游
