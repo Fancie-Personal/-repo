@@ -69,9 +69,15 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // Minecraft Bedrock / Xbox / biubiu
+  // Minecraft Bedrock / Java / Xbox / biubiu
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
+  'PROCESS-NAME,MinecraftLauncher.exe,直连',
+  'PROCESS-NAME,javaw.exe,直连',
+  'PROCESS-NAME,java.exe,直连',
+  'PROCESS-NAME,HMCL.exe,直连',
+  'PROCESS-NAME,BakaXL.exe,直连',
+  'PROCESS-NAME,PCL2.exe,直连',
   'PROCESS-NAME,GamingServices.exe,直连',
   'PROCESS-NAME,gamingservices.exe,直连',
   'PROCESS-NAME,XboxPcApp.exe,直连',
@@ -108,7 +114,9 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft.net,直连',
   'DOMAIN-SUFFIX,mojang.com,直连',
   'DOMAIN-SUFFIX,minecraftservices.com,直连',
+  'DOMAIN-SUFFIX,minecraft-services.net,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
+  'DOMAIN-SUFFIX,live.com,直连',
 
   // 原神 B服 / bilibili / 米哈游
   'DOMAIN-SUFFIX,biligame.com,直连',
