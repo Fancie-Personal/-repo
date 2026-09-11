@@ -118,6 +118,10 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft-services.net,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
   'DOMAIN-SUFFIX,live.com,直连',
+  'DOMAIN-SUFFIX,mcpvp.com,直连',
+  // Java/基岩游戏端口：连的是俄勒冈等纯 IP 时进程规则可能匹配不上，避免进美国节点绕一圈
+  'DST-PORT,25565,直连',
+  'DST-PORT,19132,直连',
 
   // 原神 B服 / bilibili / 米哈游
   'DOMAIN-SUFFIX,biligame.com,直连',
@@ -1522,6 +1526,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.minecraft.net',
       '+.mojang.com',
       '+.playfab.com',
+      '+.mcpvp.com',
       '+.biligame.com',
       '+.bilibili.com',
       '+.mihoyo.com',
