@@ -70,15 +70,15 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // Minecraft Bedrock / Java / Xbox / biubiu
+  // Minecraft：基岩版/Xbox 仍直连；Java 国际服（MCPVP 波特兰等）走默认代理，直连会被运营商绕到 900ms+
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
-  'PROCESS-NAME,MinecraftLauncher.exe,直连',
-  'PROCESS-NAME,javaw.exe,直连',
-  'PROCESS-NAME,java.exe,直连',
-  'PROCESS-NAME,HMCL.exe,直连',
-  'PROCESS-NAME,BakaXL.exe,直连',
-  'PROCESS-NAME,PCL2.exe,直连',
+  'PROCESS-NAME,MinecraftLauncher.exe,默认代理',
+  'PROCESS-NAME,javaw.exe,默认代理',
+  'PROCESS-NAME,java.exe,默认代理',
+  'PROCESS-NAME,HMCL.exe,默认代理',
+  'PROCESS-NAME,BakaXL.exe,默认代理',
+  'PROCESS-NAME,PCL2.exe,默认代理',
   'PROCESS-NAME,GamingServices.exe,直连',
   'PROCESS-NAME,gamingservices.exe,直连',
   'PROCESS-NAME,XboxPcApp.exe,直连',
@@ -118,9 +118,9 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft-services.net,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
   'DOMAIN-SUFFIX,live.com,直连',
-  'DOMAIN-SUFFIX,mcpvp.com,直连',
-  // Java/基岩游戏端口：连的是俄勒冈等纯 IP 时进程规则可能匹配不上，避免进美国节点绕一圈
-  'DST-PORT,25565,直连',
+  'DOMAIN-SUFFIX,mcpvp.com,默认代理',
+  'DOMAIN-SUFFIX,wynncraft.com,默认代理',
+  'DST-PORT,25565,默认代理',
   'DST-PORT,19132,直连',
 
   // 原神 B服 / bilibili / 米哈游
