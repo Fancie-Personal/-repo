@@ -70,15 +70,16 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // Minecraft：基岩版/Xbox 仍直连；Java 国际服（MCPVP 波特兰等）走默认代理，直连会被运营商绕到 900ms+
+  // Minecraft：基岩/Xbox/Java 都直连。MCPVP 的「最近主机」看的是 DNS 出口：
+  // 走美国 Cloudflare DNS 就会分到波特兰；用国内 DNS 才会像关掉 Bettbox 一样分到台湾。
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
-  'PROCESS-NAME,MinecraftLauncher.exe,默认代理',
-  'PROCESS-NAME,javaw.exe,默认代理',
-  'PROCESS-NAME,java.exe,默认代理',
-  'PROCESS-NAME,HMCL.exe,默认代理',
-  'PROCESS-NAME,BakaXL.exe,默认代理',
-  'PROCESS-NAME,PCL2.exe,默认代理',
+  'PROCESS-NAME,MinecraftLauncher.exe,直连',
+  'PROCESS-NAME,javaw.exe,直连',
+  'PROCESS-NAME,java.exe,直连',
+  'PROCESS-NAME,HMCL.exe,直连',
+  'PROCESS-NAME,BakaXL.exe,直连',
+  'PROCESS-NAME,PCL2.exe,直连',
   'PROCESS-NAME,GamingServices.exe,直连',
   'PROCESS-NAME,gamingservices.exe,直连',
   'PROCESS-NAME,XboxPcApp.exe,直连',
@@ -118,9 +119,9 @@ const prefixRules = [
   'DOMAIN-SUFFIX,minecraft-services.net,直连',
   'DOMAIN-SUFFIX,playfab.com,直连',
   'DOMAIN-SUFFIX,live.com,直连',
-  'DOMAIN-SUFFIX,mcpvp.com,默认代理',
-  'DOMAIN-SUFFIX,wynncraft.com,默认代理',
-  'DST-PORT,25565,默认代理',
+  'DOMAIN-SUFFIX,mcpvp.com,直连',
+  'DOMAIN-SUFFIX,wynncraft.com,直连',
+  'DST-PORT,25565,直连',
   'DST-PORT,19132,直连',
 
   // 原神 B服 / bilibili / 米哈游
@@ -1527,6 +1528,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.mojang.com',
       '+.playfab.com',
       '+.mcpvp.com',
+      '+.wynncraft.com',
       '+.biligame.com',
       '+.bilibili.com',
       '+.mihoyo.com',
@@ -1550,6 +1552,9 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       'rule-set:geolocation-cn': chinaDohDNS,
       '+.aws-agent.com': chinaDohDNS,
       '+.apt-agent.dev': chinaDohDNS,
+      // MCPVP/Wynncraft 用国内 DNS，避免 Cloudflare 按美国出口把你分到波特兰
+      '+.mcpvp.com': chinaDohDNS,
+      '+.wynncraft.com': chinaDohDNS,
       ...proxyServerPolicy,
     },
     'direct-nameserver': chinaDohDNS,
