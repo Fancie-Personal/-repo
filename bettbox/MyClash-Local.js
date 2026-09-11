@@ -70,7 +70,7 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // 基岩版 / Xbox / biubiu：整进程直连（必须排在 GEOIP,US 前面）
+  // 基岩版 / Xbox / biubiu：整进程直连
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
   'PROCESS-NAME,GamingServices.exe,直连',
@@ -84,31 +84,18 @@ const prefixRules = [
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
 
-  // Java 国际服按目的地拆：东亚直连（台湾才能探测），美国走默认代理
+  // Java：全部直连，不要 GEOIP,US→代理（否则大厅入口在美国，永远分到波特兰）
   'GEOIP,TW,直连,no-resolve',
   'GEOIP,JP,直连,no-resolve',
   'GEOIP,SG,直连,no-resolve',
   'GEOIP,KR,直连,no-resolve',
   'GEOIP,PH,直连,no-resolve',
-  'GEOIP,US,默认代理,no-resolve',
-
-  // Java 启动器/进程：未命中上面 GEOIP 的剩余流量直连（正版验证、皮肤等）
   'PROCESS-NAME,MinecraftLauncher.exe,直连',
   'PROCESS-NAME,javaw.exe,直连',
   'PROCESS-NAME,java.exe,直连',
   'PROCESS-NAME,HMCL.exe,直连',
   'PROCESS-NAME,BakaXL.exe,直连',
   'PROCESS-NAME,PCL2.exe,直连',
-  'PROCESS-NAME,GamingServices.exe,直连',
-  'PROCESS-NAME,gamingservices.exe,直连',
-  'PROCESS-NAME,XboxPcApp.exe,直连',
-  'PROCESS-NAME,XboxPcAppFT.exe,直连',
-  'PROCESS-NAME,XboxApp.exe,直连',
-  'PROCESS-NAME,GameBar.exe,直连',
-  'PROCESS-NAME,biubiu.exe,直连',
-  'PROCESS-NAME,biubiu_nets_proxy.exe,直连',
-  'PROCESS-NAME,bbservice.exe,直连',
-  'PROCESS-NAME,acchelper.exe,直连',
 
   // Steam：商店网页整段进默认代理（含 HTTP/3）；游戏进程直连给 biubiu
   'PROCESS-NAME,steamwebhelper.exe,默认代理',
