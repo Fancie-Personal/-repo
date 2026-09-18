@@ -4,7 +4,7 @@
  * 上游原版：https://github.com/AIsouler/MyClash
  * 本地补丁：微信/微软/Xbox/Minecraft/原神B服直连；Steam 商店走默认代理、游戏给 biubiu；花云 hosts/入口 DNS 加固
  * 网络策略：默认开 TUN；浏览器建议不进 TUN（走系统代理，缓解 Cloudflare）
- * 同步自上游日期：2026-09-11
+ * 同步自上游日期：2026-09-18
  */
 
 /**
@@ -42,7 +42,8 @@ const ruleOptionsEnable = {
   Steam: true, // Steam游戏平台
   TikTok: true, // TikTok视频平台
   Twitter: true, // Twitter社交平台
-  Instagram: true, // Instagram社交平台
+  Meta: true, // Meta服务
+  Line: true, // Line通讯软件
   Netflix: true, // Netflix视频平台
   Emby: true, // Emby媒体服务
   PikPak: true, // PikPak网盘服务
@@ -70,7 +71,10 @@ const prefixRules = [
   // 私有网络直连
   'RULE-SET,private,直连',
 
-  // 基岩版 / Xbox / biubiu：整进程直连
+  // Telegram 进程整段进 Telegram 组。不要用 GEOIP,SG/JP 直连，会把新加坡 DC 打直连导致客户端 SOCKS 一直「连接中」。
+  'PROCESS-NAME,Telegram.exe,Telegram',
+
+  // 基岩版 / Xbox / biubiu
   'PROCESS-NAME,Minecraft.Windows.exe,直连',
   'PROCESS-NAME,Minecraft.exe,直连',
   'PROCESS-NAME,GamingServices.exe,直连',
@@ -84,12 +88,7 @@ const prefixRules = [
   'PROCESS-NAME,bbservice.exe,直连',
   'PROCESS-NAME,acchelper.exe,直连',
 
-  // Java：全部直连，不要 GEOIP,US→代理（否则大厅入口在美国，永远分到波特兰）
-  'GEOIP,TW,直连,no-resolve',
-  'GEOIP,JP,直连,no-resolve',
-  'GEOIP,SG,直连,no-resolve',
-  'GEOIP,KR,直连,no-resolve',
-  'GEOIP,PH,直连,no-resolve',
+  // Java Minecraft 直连（要台湾入口需同时在访问控制里让 javaw 不进 TUN）
   'PROCESS-NAME,MinecraftLauncher.exe,直连',
   'PROCESS-NAME,javaw.exe,直连',
   'PROCESS-NAME,java.exe,直连',
@@ -97,7 +96,7 @@ const prefixRules = [
   'PROCESS-NAME,BakaXL.exe,直连',
   'PROCESS-NAME,PCL2.exe,直连',
 
-  // Steam：商店网页整段进默认代理（含 HTTP/3）；游戏进程直连给 biubiu
+  // Steam：商店网页进默认代理；游戏进程直连给 biubiu
   'PROCESS-NAME,steamwebhelper.exe,默认代理',
   'PROCESS-NAME,steam.exe,直连',
   'PROCESS-NAME,SteamService.exe,直连',
@@ -105,7 +104,7 @@ const prefixRules = [
   'PROCESS-NAME,GameOverlayUI.exe,直连',
   'PROCESS-NAME,streaming_client.exe,直连',
 
-  // 原神 B服 / bilibili 游戏 / 米哈游启动器（不写 launcher.exe，避免误伤其他启动器）
+  // 原神 B服 / 米哈游启动器（不写 launcher.exe）
   'PROCESS-NAME,YuanShen.exe,直连',
   'PROCESS-NAME,StarRail.exe,直连',
   'PROCESS-NAME,ZenlessZoneZero.exe,直连',
@@ -514,9 +513,15 @@ const serviceConfigs = [
         path: './ruleset/microsoft.mrs',
         'path-in-bundle': 'geo/geosite/microsoft.mrs',
       },
+      microsoft_ip: {
+        ...ruleProviderCommonIpcidr,
+        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geoip/microsoft.mrs',
+        path: './ruleset/microsoft_ip.mrs',
+        'path-in-bundle': 'geo/geoip/microsoft.mrs',
+      },
     },
     icon: 'https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Microsoft.png',
-    rules: ['RULE-SET,github,默认代理', 'RULE-SET,microsoft,Microsoft'],
+    rules: ['RULE-SET,github,默认代理', 'RULE-SET,microsoft,Microsoft', 'RULE-SET,microsoft_ip,Microsoft,no-resolve'],
   },
   {
     name: 'Apple',
@@ -529,9 +534,15 @@ const serviceConfigs = [
         path: './ruleset/apple.mrs',
         'path-in-bundle': 'geo/geosite/apple.mrs',
       },
+      apple_ip: {
+        ...ruleProviderCommonIpcidr,
+        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geoip/apple.mrs',
+        path: './ruleset/apple_ip.mrs',
+        'path-in-bundle': 'geo/geoip/apple.mrs',
+      },
     },
     icon: 'https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png',
-    rules: ['RULE-SET,apple,Apple'],
+    rules: ['RULE-SET,apple,Apple', 'RULE-SET,apple_ip,Apple,no-resolve'],
   },
   {
     name: 'Telegram',
@@ -617,18 +628,38 @@ const serviceConfigs = [
     rules: ['RULE-SET,twitter,Twitter', 'RULE-SET,twitter_ip,Twitter,no-resolve'],
   },
   {
-    name: 'Instagram',
+    name: 'Meta',
     baseOption: selectBaseOption,
     providers: {
-      instagram: {
+      meta: {
         ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geosite/instagram.mrs',
-        path: './ruleset/instagram.mrs',
-        'path-in-bundle': 'geo/geosite/instagram.mrs',
+        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geosite/meta.mrs',
+        path: './ruleset/meta.mrs',
+        'path-in-bundle': 'geo/geosite/meta.mrs',
+      },
+      facebook_ip: {
+        ...ruleProviderCommonIpcidr,
+        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geoip/facebook.mrs',
+        path: './ruleset/facebook_ip.mrs',
+        'path-in-bundle': 'geo/geoip/facebook.mrs',
       },
     },
-    icon: 'https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Instagram.png',
-    rules: ['RULE-SET,instagram,Instagram'],
+    icon: 'https://cdn.jsdelivr.net/gh/lige47/QuanX-icon-rule@main/icon/04ProxySoft/meta.png',
+    rules: ['RULE-SET,meta,Meta', 'RULE-SET,facebook_ip,Meta,no-resolve'],
+  },
+  {
+    name: 'Line',
+    baseOption: selectBaseOption,
+    providers: {
+      line: {
+        ...ruleProviderCommonDomain,
+        url: 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/geosite/line.mrs',
+        path: './ruleset/line.mrs',
+        'path-in-bundle': 'geo/geosite/line.mrs',
+      },
+    },
+    icon: 'https://cdn.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Line.png',
+    rules: ['RULE-SET,line,Line'],
   },
   {
     name: 'Netflix',
@@ -738,6 +769,7 @@ const serviceConfigs = [
   {
     name: 'EHentai',
     baseOption: selectBaseOption,
+    direct: true,
     defaultSelected: '美国',
     providers: {
       ehentai: {
@@ -1230,11 +1262,13 @@ const commonDnsList = [
   // 关键词（国外）
   'dns.google',
   'dns.cloudflare',
+  'dns.apple',
   'cloudflare-dns',
   'quad9',
   'opendns',
   'nextdns',
   'adguard',
+  'one.one.one.one',
 ];
 
 // 预编译公共 DNS 正则
@@ -1247,6 +1281,8 @@ const commonDnsRegex = new RegExp(
 const chinaDNS = ['223.5.5.5#DIRECT', '119.29.29.29#DIRECT'];
 const chinaDohDNS = ['https://223.5.5.5/dns-query#DIRECT', 'https://1.12.12.12/dns-query#DIRECT'];
 const foreignDNS = ['https://cloudflare-dns.com/dns-query#默认代理', 'https://dns.google/dns-query#默认代理'];
+const defaultDNS = ['tls://223.5.5.5#DIRECT', 'https://1.12.12.12/dns-query#DIRECT'];
+const proxyServerDNS = ['tls://223.5.5.5#DIRECT', 'https://doh.pub/dns-query#DIRECT'];
 
 /**
  * hosts 匹配优先级：精确 > +. > . > *（同级按出现顺序）
@@ -1543,19 +1579,17 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.apt-agent.dev',
       ...proxyFakeIpFilter,
     ],
-    'proxy-server-nameserver': chinaDohDNS,
+    'default-nameserver': defaultDNS,
+    'proxy-server-nameserver': proxyServerDNS,
     ...(Object.keys(proxyServerPolicy).length > 0 && {
       'proxy-server-nameserver-policy': proxyServerPolicy,
     }),
-    'default-nameserver': chinaDohDNS,
     nameserver: foreignDNS,
-    // 国内域名走 DoH(TCP)：本机 UDP/53 出站不通。不要用 system DNS（会指向 Clash 自己）。
     'nameserver-policy': {
       'rule-set:cn': chinaDohDNS,
       'rule-set:geolocation-cn': chinaDohDNS,
       '+.aws-agent.com': chinaDohDNS,
       '+.apt-agent.dev': chinaDohDNS,
-      // MCPVP/Wynncraft 用国内 DNS，避免 Cloudflare 按美国出口把你分到波特兰
       '+.mcpvp.com': chinaDohDNS,
       '+.wynncraft.com': chinaDohDNS,
       ...proxyServerPolicy,
@@ -1566,6 +1600,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
   const originalHosts = config.hosts || {};
 
   const hosts = {
+    'doh.pub': ['1.12.12.12', '120.53.53.53'],
     'cloudflare-dns.com': ['1.1.1.1', '1.0.0.1'],
     'dns.google': ['8.8.8.8', '8.8.4.4'],
 
@@ -1591,6 +1626,10 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
  * 主入口：覆写机场订阅配置，生成完整 mihomo 配置
  */
 function main(config) {
+  if (config['proxy-providers'] && Object.keys(config['proxy-providers']).length > 0) {
+    throw new Error('配置文件中包含 proxy-providers，请使用机场提供的配置文件进行覆写');
+  }
+
   const newConfig = {};
 
   const filteredProxies = filterAndNormalizeProxies(config);
@@ -1634,7 +1673,7 @@ function main(config) {
     interval: 60,
   };
 
-  // 日常默认开 TUN。浏览器建议在 Bettbox 访问控制中绕过 TUN（走系统代理），减轻 Cloudflare 拦截。
+  // Windows 用 system；上游 mips 不是 mihomo 合法 stack。浏览器建议绕过 TUN。
   newConfig['tun'] = {
     enable: true,
     stack: 'system',
@@ -1664,13 +1703,10 @@ function main(config) {
     'RULE-SET,geolocation-!cn,默认代理',
     'RULE-SET,cn_ip,直连',
     'RULE-SET,private_ip,直连',
-
-    // 保险：rule-provider 下载失败时上面全是空规则，国内站会被丢进代理。
     'GEOSITE,private,直连',
     'GEOSITE,cn,直连',
     'GEOIP,private,直连,no-resolve',
     'GEOIP,CN,直连',
-
     'MATCH,漏网之鱼',
   ];
 
