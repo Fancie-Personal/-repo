@@ -4,7 +4,7 @@
  * 上游原版：https://github.com/AIsouler/MyClash
  * 本地补丁：微信/微软/Xbox/Minecraft/原神B服直连；Steam 商店走默认代理、游戏给 biubiu；花云 hosts/入口 DNS 加固
  * 网络策略：默认开 TUN；浏览器建议不进 TUN（走系统代理，缓解 Cloudflare）
- * 同步自上游日期：2026-09-22
+ * 同步自上游日期：2026-10-07
  */
 
 /**
@@ -50,6 +50,7 @@ const ruleOptionsEnable = {
   Spotify: true, // Spotify音乐服务
   Crypto: true, // 加密货币相关服务
   PayPal: true, // PayPal支付服务
+  Patreon: true, // Patreon创作者赞助平台
   EHentai: true, // E-Hentai网站
   AdBlock: true, // 广告拦截
 
@@ -260,13 +261,13 @@ const rateRegionDefinitions = [
   {
     name: lowRateRegionName,
     regex:
-      /^(?!.*(?:剩|期)).*(?:(?<!\d)0\.[0-5]|(?<=[ \[\(|｜丨∣┃\-‐–—−－﹣])0[*×✕✖⨯⨉x倍])|(?:(?<=[ \[\(|｜丨∣┃\-‐–—−－﹣])[*×✕✖⨯⨉x]0(?=[ \)\]]|倍|$))|^(?!.*(?:客户端|软件)).*下载|低倍|免费|(?<![A-Za-z])free(?![A-Za-z])/i,
+      /^(?!.*(?:剩|期)).*(?:(?<!\d)0(\.[0-5]|[*×✕✖⨯⨉x倍]))|(?:[*×✕✖⨯⨉x]0)|^(?!.*(?:客户端|软件)).*下载|低倍|免费|(?<![A-Za-z])free(?![A-Za-z])/i,
     icon: `${iconBaseUrl}Available.svg`,
   },
   {
     name: highRateRegionName,
     regex:
-      /(?<=[ \[\(|｜丨∣┃\-‐–—−－﹣])((?:[*×✕✖⨯⨉x]\s*(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?\s*(?:倍|[*×✕✖⨯⨉x])))/i,
+      /(?:[*×✕✖⨯⨉x](?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?)|(?:(?<![\d.])(?:[2-9]\d*|[1-9]\d+)(?:\.\d+)?(?:倍|[*×✕✖⨯⨉x]))/i,
     icon: `${iconBaseUrl}Airport.svg`,
   },
 ];
@@ -375,6 +376,12 @@ const baseRuleProviders = {
     url: `${ruleSetBaseUrl}geosite/cn.mrs`,
     path: './ruleset/cn.mrs',
     'path-in-bundle': 'geo/geosite/cn.mrs',
+  },
+  douyin: {
+    ...ruleProviderCommonDomain,
+    url: `${ruleSetBaseUrl}geosite/douyin.mrs`,
+    path: './ruleset/douyin.mrs',
+    'path-in-bundle': 'geo/geosite/douyin.mrs',
   },
 };
 
@@ -777,6 +784,7 @@ const serviceConfigs = [
   {
     name: 'PayPal',
     baseOption: selectBaseOption,
+    defaultSelected: '美国',
     providers: {
       paypal: {
         ...ruleProviderCommonDomain,
@@ -787,6 +795,21 @@ const serviceConfigs = [
     },
     icon: `${iconBaseUrl}PayPal.svg`,
     rules: ['RULE-SET,paypal,PayPal'],
+  },
+  {
+    name: 'Patreon',
+    baseOption: selectBaseOption,
+    defaultSelected: '香港',
+    providers: {
+      patreon: {
+        ...ruleProviderCommonDomain,
+        url: `${ruleSetBaseUrl}geosite/patreon.mrs`,
+        path: './ruleset/patreon.mrs',
+        'path-in-bundle': 'geo/geosite/patreon.mrs',
+      },
+    },
+    icon: `${iconBaseUrl}Patreon.svg`,
+    rules: ['RULE-SET,patreon,Patreon'],
   },
   {
     name: 'EHentai',
@@ -809,17 +832,23 @@ const serviceConfigs = [
     baseOption: selectBaseOption,
     reject: true,
     providers: {
-      adblockmihomolite: {
+      'category-ads': {
         ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomolite.mrs',
-        path: './ruleset/adblockmihomolite.mrs',
-        'path-in-bundle': 'geo/geosite/category-ads-all.mrs',
+        url: `${ruleSetBaseUrl}geosite/category-ads.mrs`,
+        path: './ruleset/category-ads.mrs',
+        'path-in-bundle': 'geo/geosite/category-ads.mrs',
       },
     },
     icon: `${iconBaseUrl}AdBlock.svg`,
-    rules: ['RULE-SET,adblockmihomolite,AdBlock'],
+    rules: ['RULE-SET,category-ads,AdBlock'],
   },
 ];
+
+/**
+ * 适配 Bettbox 策略组开关
+ * 声明哪些开关属于策略组：基础策略组 + 全部分流策略组。
+ */
+Compatible_With_Bettbox.policyGroupOptions = serviceConfigs.map((svc) => svc.name);
 
 // ---节点过滤、重命名及验证---
 
@@ -1104,7 +1133,7 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
 
   const { customProxyNames = [], customGroup = null } = customizeInfo || {};
   const filteredProxyNames = filteredProxies.map((p) => p.name);
-  const allProxiesNames = [...customProxyNames, ...filteredProxyNames];
+  const allProxiesNames = [...filteredProxyNames, ...customProxyNames];
   const groupNamesOfSelect = generatedRegionGroups.filter((g) => g.type === 'select').map((g) => g.name);
   const baseGroupNames = baseGroups.filter((g) => ruleOptionsEnable[g.name]).map((g) => g.name);
   const customGroupNames = customGroup ? [customGroup.name] : [];
@@ -1633,7 +1662,10 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       'proxy-server-nameserver-policy': proxyServerPolicy,
     }),
     nameserver: foreignDNS,
+    // 不要用 system：TUN 网卡的系统 DNS 是 Clash 自己，会自环。本机 UDP/53 也不通，国内走 DoH。
     'nameserver-policy': {
+      'rule-set:private': chinaDohDNS,
+      'rule-set:douyin': chinaDohDNS,
       'rule-set:cn': chinaDohDNS,
       'rule-set:geolocation-cn': chinaDohDNS,
       '+.aws-agent.com': chinaDohDNS,
@@ -1643,6 +1675,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       ...proxyServerPolicy,
     },
     'direct-nameserver': chinaDohDNS,
+    'direct-nameserver-follow-policy': true,
   };
 
   const originalHosts = config.hosts || {};
@@ -1732,7 +1765,7 @@ function main(config) {
     'dns-hijack': ['any:53', 'tcp://any:53'],
   };
 
-  newConfig['proxies'] = [...customProxies, ...mappedProxies, ...directProxies];
+  newConfig['proxies'] = [...mappedProxies, ...customProxies, ...directProxies];
   newConfig['proxy-groups'] = [
     globalGroup,
     ...functionalGroups,
