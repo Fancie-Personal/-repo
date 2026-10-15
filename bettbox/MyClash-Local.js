@@ -4,7 +4,7 @@
  * 上游原版：https://github.com/AIsouler/MyClash
  * 本地补丁：微信/微软/Xbox/Minecraft/原神B服直连；Steam 商店走默认代理、游戏给 biubiu；花云 hosts/入口 DNS 加固
  * 网络策略：默认开 TUN；浏览器建议不进 TUN（走系统代理，缓解 Cloudflare）
- * 同步自上游日期：2026-10-07
+ * 同步自上游日期：2026-10-15（9d4fba1dd1f35de4b3a9ccc27badcc804e9ca148）
  */
 
 /**
@@ -66,7 +66,6 @@ const ruleOptionsEnable = {
   屏蔽国外QUIC: true, // 是否屏蔽国外QUIC流量
   代理IPV4优先: false, // 是否将订阅节点统一为 IPv4 优先（与“代理IPV6优先”同时开启时不生效）
   代理IPV6优先: false, // 是否将订阅节点统一为 IPv6 优先（与“代理IPV4优先”同时开启时不生效）
-  链式代理: false, // 是否启用链式代理（自定义节点作为落地节点，经“链式中转”策略组中转）
 };
 
 // 定义前置规则
@@ -172,12 +171,9 @@ const prefixRules = [
 // ];
 const customizeProxies = [];
 
-// 链式代理启用时，自定义节点的 dialer-proxy 引用目标
-const dialerProxyName = '链式中转';
-
 // 定义全局排除节点的正则表达式，用于排除非地区节点
 const excludeFilter =
-  /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|电报|无法|说明|使用|提示|访问|支持|教程|关注|更新|作者|加入|超时|收藏|优惠|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|建议|重置|以下|过滤|⚠️|@|t\.me\/\+|\bexpire\b|\bhttps?:\/\/|\.com|\btraffic\b/iu;
+  /群|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|电报|无法|说明|提示|访问|支持|教程|关注|更新|作者|加入|超时|收藏|优惠|福利|邀请|好友|失联|选择|剩余|公益|发布|DIZTNA|通路|登录|禁止|定时|渠道|牢记|永久|余额|阁下|本站|刷新|导航|建议|重置|以下|过滤|⚠️|@|t\.me\/\+|\bexpire\b|\bhttps?:\/\/|\.com|\btraffic\b/iu;
 
 // 屏蔽国外QUIC
 const blockForeignQuic = [
@@ -213,10 +209,10 @@ const directProxies = [
 ];
 
 // 图标 URL 公共前缀
-const iconBaseUrl = 'https://cdn.jsdelivr.net/gh/AIsouler/MyClash@main/Icons/svg/';
+const iconBaseUrl = 'https://cdn.jsdmirror.com/gh/AIsouler/MyClash@main/Icons/svg/';
 
 // 规则集 URL 公共前缀
-const ruleSetBaseUrl = 'https://cdn.jsdelivr.net/gh/appshubcc/bett-rules@meta/geo/';
+const ruleSetBaseUrl = 'https://cdn.jsdmirror.com/gh/appshubcc/bett-rules@meta/geo/';
 
 // 定义地区策略组
 const regionDefinitions = [
@@ -246,7 +242,7 @@ const regionDefinitions = [
     icon: `${iconBaseUrl}Singapore.svg`,
   },
   {
-    name: '台湾省',
+    name: '台湾',
     flag: '🇹🇼',
     regex: /🇹🇼|台湾|台北|高雄|(?<![A-Za-z])TWN?(?![A-Za-z])|taiwan/i,
     icon: `${iconBaseUrl}Taiwan.svg`,
@@ -703,13 +699,13 @@ const serviceConfigs = [
     providers: {
       emby: {
         ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdelivr.net/gh/666OS/rules@release/mihomo/domain/Emby.mrs',
+        url: 'https://cdn.jsdmirror.com/gh/666OS/rules@release/mihomo/domain/Emby.mrs',
         path: './ruleset/emby.mrs',
         'path-in-bundle': 'geo/geosite/category-emby.mrs',
       },
       emos: {
         ...ruleProviderCommonDomain,
-        url: 'https://cdn.jsdelivr.net/gh/binaryu/emos-proxy-rule@main/rules/emos-mihomo.mrs',
+        url: 'https://cdn.jsdmirror.com/gh/binaryu/emos-proxy-rule@main/rules/emos-mihomo.mrs',
         path: './ruleset/emos.mrs',
         'path-in-bundle': 'geo/geosite/category-emby.mrs',
       },
@@ -1067,12 +1063,7 @@ function buildRegionGroups(filteredProxies, customProxies) {
  * 自定义节点不参与订阅节点过滤，也不参与 hosts 改写及 DNS 域名处理。
  */
 function buildCustomizeGroups(filteredProxies, customizeList = customizeProxies) {
-  const chainEnabled = ruleOptionsEnable.链式代理;
-
   if (!customizeList.length) {
-    if (chainEnabled) {
-      throw new Error('启用失败，请在脚本中添加自定义节点后尝试');
-    }
     return { customProxies: [], customProxyNames: [], customGroup: null };
   }
 
@@ -1088,18 +1079,14 @@ function buildCustomizeGroups(filteredProxies, customizeList = customizeProxies)
     }
     usedNames.add(name);
 
-    let customProxy = name === normalized.name ? normalized : { ...normalized, name };
-    if (chainEnabled && customProxy['dialer-proxy'] !== dialerProxyName) {
-      customProxy = { ...customProxy, 'dialer-proxy': dialerProxyName };
-    }
-    customProxies.push(customProxy);
+    customProxies.push(name === normalized.name ? normalized : { ...normalized, name });
   }
 
   const customProxyNames = customProxies.map((p) => p.name);
 
   const customGroup = {
     ...selectBaseOption,
-    name: chainEnabled ? '链式落地' : '自建节点',
+    name: '自建节点',
     proxies: customProxyNames,
     icon: `${iconBaseUrl}Server.svg`,
   };
@@ -1120,7 +1107,6 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
   const minimalModeEnabled = ruleOptionsEnable.极简模式;
   const blockForeignQuicEnabled = ruleOptionsEnable.屏蔽国外QUIC;
   const addAllNodesToServiceGroupsEnabled = ruleOptionsEnable.分流组添加所有节点;
-  const chainEnabled = ruleOptionsEnable.链式代理;
   const hideManualSelectGroupEnabled = ruleOptionsEnable.隐藏地区手动选择组;
 
   const functionalGroups = [];
@@ -1137,16 +1123,6 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
   const groupNamesOfSelect = generatedRegionGroups.filter((g) => g.type === 'select').map((g) => g.name);
   const baseGroupNames = baseGroups.filter((g) => ruleOptionsEnable[g.name]).map((g) => g.name);
   const customGroupNames = customGroup ? [customGroup.name] : [];
-
-  const chainGroup =
-    chainEnabled && customGroup
-      ? {
-          ...selectBaseOption,
-          name: dialerProxyName,
-          proxies: filteredProxyNames,
-          icon: `${iconBaseUrl}Bypass.svg`,
-        }
-      : null;
 
   if (minimalModeEnabled) {
     const defaultGroup = {
@@ -1167,7 +1143,7 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
     const globalGroup = {
       ...selectBaseOption,
       name: 'GLOBAL',
-      proxies: ['默认代理', ...customGroupNames, ...(chainGroup ? [chainGroup.name] : []), '直连'],
+      proxies: ['默认代理', ...customGroupNames, '直连'],
       icon: `${iconBaseUrl}Global.svg`,
     };
     return {
@@ -1175,7 +1151,6 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
       functionalGroups: [defaultGroup],
       functionalRules: [],
       finalRuleProviders,
-      chainGroup,
       directGroup,
     };
   }
@@ -1251,99 +1226,169 @@ function buildFunctionalGroups(filteredProxies, generatedRegionGroups, customize
     proxies: [
       ...functionalGroups.map((g) => g.name),
       ...customGroupNames,
-      ...(chainGroup ? [chainGroup.name] : []),
       directGroup.name,
       ...generatedRegionGroups.map((g) => g.name),
     ],
     icon: `${iconBaseUrl}Global.svg`,
   };
 
-  return { globalGroup, functionalGroups, functionalRules, finalRuleProviders, chainGroup, directGroup };
+  return { globalGroup, functionalGroups, functionalRules, finalRuleProviders, directGroup };
 }
 
 // ---dns和hosts相关处理---
 
 // 常见的公共 DNS，用于过滤订阅中的公共 DNS
 const commonDnsList = [
-  // IPv4（国内）
+  // ==================== 国内 ====================
+
+  // 阿里 AliDNS（阿里云）
   '223.5.5.5',
   '223.6.6.6',
-  '119.29.29.29',
-  '1.12.12.12',
-  '120.53.53.53',
-  '114.114.114.114',
-  '180.76.76.76',
-  '1.2.4.8',
-  '116.116.116.116',
-  '101.226.4.6',
-  '123.125.81.6',
-  '180.184.1.1',
-  '180.184.2.2',
-
-  // IPv6（国内）
   '2400:3200::1',
   '2400:3200:baba::1',
-  '2402:4e00::',
-  '2400:da00::6666',
-
-  // IPv4（国外）
-  '1.1.1.1',
-  '1.0.0.1',
-  '8.8.8.8',
-  '8.8.4.4',
-  '9.9.9.9',
-  '149.112.112.112',
-  '208.67.222.222',
-  '208.67.220.220',
-  '94.140.14.14',
-  '94.140.15.15',
-  '76.76.2.0',
-  '76.76.10.0',
-  '185.228.168.9',
-  '185.228.169.9',
-  '77.88.8.8',
-  '77.88.8.1',
-  '156.154.70.1',
-  '156.154.71.1',
-
-  // IPv6（国外）
-  '2606:4700:4700::1111',
-  '2606:4700:4700::1001',
-  '2001:4860:4860::8888',
-  '2001:4860:4860::8844',
-  '2620:fe::fe',
-  '2620:fe::9',
-  '2620:119:35::35',
-  '2620:119:53::53',
-  '2a10:50c0::bad1:ff',
-  '2a10:50c0::bad2:ff',
-  '2a10:50c0::ad1:ff',
-  '2a10:50c0::ad2:ff',
-  '2a0d:2a00:1::2',
-  '2a0d:2a00:2::2',
-  '2a02:6b8::feed:0ff',
-  '2a02:6b8:0:1::feed:0ff',
-  '2610:a1:1018::1',
-  '2610:a1:1019::1',
-
-  // 关键词（国内）
   'alidns',
+
+  // 腾讯 DNSPod（腾讯云）
+  '119.29.29.29',
+  '182.254.116.116',
+  '1.12.12.12',
+  '120.53.53.53',
+  '2402:4e00::',
   'doh.pub',
   'dot.pub',
   'dns.pub',
   'dnspod',
+
+  // 114DNS（南京信风）
+  '114.114.114.114',
+  '114.114.115.115',
+
+  // 百度 BaiduDNS
+  '180.76.76.76',
+  '2400:da00::6666',
   'dns.baidu',
 
-  // 关键词（国外）
-  'dns.google',
+  // CNNIC SDNS（中国互联网络信息中心）
+  '1.2.4.8',
+  '210.2.4.8',
+  '2001:dc7:1000::1',
+  'cnnic',
+
+  // 360 安全 DNS
+  '101.226.4.6',
+  '218.30.118.6',
+  '123.125.81.6',
+  '2400:8800:1::6',
+  '2400:8800:2::6',
+  'doh.360',
+  'dot.360',
+
+  // 火山引擎（字节跳动）
+  '180.184.1.1',
+  '180.184.2.2',
+
+  // ==================== 国外 ====================
+
+  // Cloudflare
+  '1.1.1.1',
+  '1.0.0.1',
+  '1.1.1.2',
+  '1.0.0.2',
+  '1.1.1.3',
+  '1.0.0.3',
+  '2606:4700:4700::1111',
+  '2606:4700:4700::1001',
+  '2606:4700:4700::1112',
+  '2606:4700:4700::1002',
+  '2606:4700:4700::1113',
+  '2606:4700:4700::1003',
   'dns.cloudflare',
-  'dns.apple',
   'cloudflare-dns',
-  'quad9',
-  'opendns',
-  'nextdns',
-  'adguard',
   'one.one.one.one',
+
+  // Google Public DNS
+  '8.8.8.8',
+  '8.8.4.4',
+  '2001:4860:4860::8888',
+  '2001:4860:4860::8844',
+  'dns.google',
+
+  // Quad9
+  '9.9.9.9',
+  '9.9.9.10',
+  '9.9.9.11',
+  '149.112.112.112',
+  '149.112.112.10',
+  '149.112.112.11',
+  '2620:fe::fe',
+  '2620:fe::9',
+  'quad9',
+
+  // Cisco OpenDNS（含 FamilyShield）
+  '208.67.222.222',
+  '208.67.220.220',
+  '208.67.222.123',
+  '208.67.220.123',
+  '2620:119:35::35',
+  '2620:119:53::53',
+  '2620:119:35::123',
+  '2620:119:53::123',
+  'opendns',
+
+  // AdGuard DNS（含家庭版）
+  '94.140.14.14',
+  '94.140.15.15',
+  '94.140.14.15',
+  '94.140.15.16',
+  '2a10:50c0::ad1:ff',
+  '2a10:50c0::ad2:ff',
+  '2a10:50c0::bad1:ff',
+  '2a10:50c0::bad2:ff',
+  'adguard',
+
+  // Control D
+  '76.76.2.0',
+  '76.76.10.0',
+  '76.76.19.19',
+  '76.223.122.150',
+  '2a0d:2a00:1::2',
+  '2a0d:2a00:2::2',
+
+  // CleanBrowsing（含安全/家庭版）
+  '185.228.168.9',
+  '185.228.169.9',
+  '185.228.168.10',
+  '185.228.169.11',
+  '185.228.168.168',
+  '185.228.169.168',
+
+  // Yandex DNS
+  '77.88.8.8',
+  '77.88.8.1',
+  '2a02:6b8::feed:0ff',
+  '2a02:6b8:0:1::feed:0ff',
+
+  // Neustar UltraDNS
+  '156.154.70.1',
+  '156.154.71.1',
+  '156.154.70.2',
+  '156.154.71.2',
+  '2610:a1:1018::1',
+  '2610:a1:1019::1',
+
+  // Mullvad DNS
+  '194.242.2.2',
+  '2a07:e340::2',
+
+  // Hurricane Electric
+  '74.82.42.42',
+  '2001:470:20::2',
+
+  // NextDNS
+  'nextdns',
+
+  // Apple
+  'dns.apple',
 ];
 
 // 预编译公共 DNS 正则
@@ -1353,11 +1398,12 @@ const commonDnsRegex = new RegExp(
 );
 
 // 国内外 DNS 定义
-const chinaDNS = ['223.5.5.5#DIRECT', '119.29.29.29#DIRECT'];
 const chinaDohDNS = ['https://223.5.5.5/dns-query#DIRECT', 'https://1.12.12.12/dns-query#DIRECT'];
-const foreignDNS = ['https://cloudflare-dns.com/dns-query#默认代理', 'https://dns.google/dns-query#默认代理'];
-const defaultDNS = ['tls://223.5.5.5#DIRECT', 'https://1.12.12.12/dns-query#DIRECT'];
-const proxyServerDNS = ['tls://223.5.5.5#DIRECT', 'https://doh.pub/dns-query#DIRECT'];
+// IP 字面量避免为国外 DoH 主机额外向国内 bootstrap 查询；显式指定代理，失败时不回退直连。
+const foreignDNS = ['https://1.1.1.1/dns-query#默认代理', 'https://8.8.8.8/dns-query#默认代理'];
+// Bootstrap / 节点解析均使用可直连的 IP DoH，不与 system / 明文 UDP DNS 并发查询。
+const defaultDNS = chinaDohDNS;
+const proxyServerDNS = chinaDohDNS;
 
 /**
  * hosts 匹配优先级：精确 > +. > . > *（同级按出现顺序）
@@ -1605,6 +1651,17 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       ? simplifyDomainPolicy(matchedProxyPolicy)
       : matchedProxyPolicy;
 
+  // 订阅策略可能是 +.com 等宽泛匹配。业务 DNS 中只复制实际节点的精确域名，
+  // 避免机场私有解析器接收无关网站的查询；节点专用 policy 仍保留上游兼容行为。
+  const nodeDomainPolicy = {};
+  const nodePolicyEntries = Object.entries(matchedProxyPolicy).sort(
+    (a, b) => hostSpecificity(b[0]) - hostSpecificity(a[0]),
+  );
+  for (const domain of proxyDomains) {
+    const match = nodePolicyEntries.find(([pattern]) => matchDomainPattern(pattern, domain));
+    if (match) nodeDomainPolicy[domain] = match[1];
+  }
+
   const originalFakeIpFilter = originalDnsConfig['fake-ip-filter'] || [];
   const proxyFakeIpFilter = originalFakeIpFilter.filter((pattern) => {
     const p = String(pattern);
@@ -1616,6 +1673,10 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     ipv6: true,
     'use-hosts': true,
     'cache-algorithm': 'arc',
+    'prefer-h3': false,
+    // 上游均显式绑定 #DIRECT / #默认代理，无需按 DNS 服务器 IP 再次选路。
+    'respect-rules': false,
+    'fake-ip-filter-mode': 'blacklist',
     'use-system-hosts': true,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/15',
@@ -1662,8 +1723,9 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       'proxy-server-nameserver-policy': proxyServerPolicy,
     }),
     nameserver: foreignDNS,
-    // 不要用 system：TUN 网卡的系统 DNS 是 Clash 自己，会自环。本机 UDP/53 也不通，国内走 DoH。
+    // 直连域名使用国内 DoH；不混入 system 或明文 DNS，以免额外泄露或受本机 DNS 接管影响。
     'nameserver-policy': {
+      ...nodeDomainPolicy,
       'rule-set:private': chinaDohDNS,
       'rule-set:douyin': chinaDohDNS,
       'rule-set:cn': chinaDohDNS,
@@ -1672,7 +1734,6 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       '+.apt-agent.dev': chinaDohDNS,
       '+.mcpvp.com': chinaDohDNS,
       '+.wynncraft.com': chinaDohDNS,
-      ...proxyServerPolicy,
     },
     'direct-nameserver': chinaDohDNS,
     'direct-nameserver-follow-policy': true,
@@ -1719,8 +1780,11 @@ function main(config) {
 
   const generatedRegionGroups = ruleOptionsEnable.极简模式 ? [] : buildRegionGroups(filteredProxies, customProxies);
 
-  const { globalGroup, functionalGroups, functionalRules, finalRuleProviders, chainGroup, directGroup } =
-    buildFunctionalGroups(filteredProxies, generatedRegionGroups, { customProxyNames, customGroup });
+  const { globalGroup, functionalGroups, functionalRules, finalRuleProviders, directGroup } = buildFunctionalGroups(
+    filteredProxies,
+    generatedRegionGroups,
+    { customProxyNames, customGroup },
+  );
 
   const { dns, hosts, proxies: mappedProxies } = buildDnsAndHostsConfig(config, filteredProxies);
 
@@ -1754,7 +1818,7 @@ function main(config) {
     interval: 60,
   };
 
-  // Windows 用 system；上游 mips 不是 mihomo 合法 stack。浏览器建议绕过 TUN。
+  // 保留本机既有 system 栈；strict-route 防止 Windows 多宿主 DNS 绕过。
   newConfig['tun'] = {
     enable: true,
     stack: 'system',
@@ -1770,14 +1834,18 @@ function main(config) {
     globalGroup,
     ...functionalGroups,
     ...(customGroup ? [customGroup] : []),
-    ...(chainGroup ? [chainGroup] : []),
     directGroup,
     ...generatedRegionGroups,
   ];
   newConfig['rule-providers'] = finalRuleProviders;
 
   newConfig['rules'] = [
-    ...prefixRules,
+    ...prefixRules.map((rule) =>
+      rule === 'PROCESS-NAME,Telegram.exe,Telegram' &&
+      (ruleOptionsEnable.极简模式 || !ruleOptionsEnable.Telegram)
+        ? 'PROCESS-NAME,Telegram.exe,默认代理'
+        : rule,
+    ),
     ...(ruleOptionsEnable.屏蔽国外QUIC ? blockForeignQuic : []),
     ...functionalRules,
 
