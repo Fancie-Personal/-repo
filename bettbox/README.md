@@ -4,10 +4,12 @@
 
 ## 本次同步
 
-- 合并日期：2026-10-15。
-- 上游提交：[`9d4fba1`](https://github.com/AIsouler/MyClash/commit/9d4fba1dd1f35de4b3a9ccc27badcc804e9ca148)（2026-10-13）。
+- 合并日期：2026-11-10。
+- 上游提交：[`4a8f619`](https://github.com/AIsouler/MyClash/commit/4a8f61981f0d3a2c1928498b6dce4ed11f1d4f0e)（2026-11-08）。
 - 上游原始快照：`upstream/mihomoScript.js`，下次合并可作为三方合并基线。
-- 跟进公共 DNS 识别表、节点过滤、CDN 镜像、台湾组名称及链式代理移除。
+- 跟进 GitHub 和家宽节点组、极简模式自动选择、节点与 hosts 匹配优化、群晖直连，以及域名规则优先于服务 IP 兜底。
+- 规则与图标 CDN 跟进上游切换到 Fastly；Emby 改用 bett-rules，移除旧 emos 规则。Fake-IP 使用 `cn` 集合并保留本地例外；QUIC 使用上游新的 `cn` / `cn_ip` 判断，保留本地默认开启。链式代理功能跟进恢复，默认关闭。
+- Bettbox 开关名称跟进上游：`极简国内外分流模式`、`生成高低倍率组`、`屏蔽代理QUIC流量`。使用自定义开关的设备在同步后应核对这些设置。
 - 保留 Telegram 进程代理、Minecraft/Xbox/原神直连、Steam 商店代理与游戏直连、国内 DoH、全部订阅 hosts 和国内分流兜底。
 
 ## DNS 出口设计
@@ -35,11 +37,11 @@ TUN 保持 `strict-route: true`，并劫持 UDP/TCP 53。Windows 严格路由用
 
 ## 验证记录
 
-运行 `node bettbox/tests/check.cjs`：11 项定制检查，包括宽泛机场 DNS 策略隔离、游戏分流、极简模式及关闭 Telegram 分组后的引用完整性。
+运行 `node bettbox/tests/check.cjs`：13 项定制检查，包括宽泛机场 DNS 策略隔离、游戏分流、GitHub 和家宽分组、QUIC 开关、极简模式及关闭 Telegram 分组后的引用完整性。
 
-另使用该上游提交的测试套件验证：180 项通过，包含 ES2020 和真实 QuickJS 运行。上游一项 hosts 测试的两条断言按本分支“保留全部订阅 hosts”的既定行为调整，未改变其他测试预期。
+另使用该上游提交的测试套件验证：184 项通过，包含 ES2020 和真实 QuickJS 运行。上游一项 hosts 测试的两条断言按本分支“保留全部订阅 hosts”的既定行为调整，未改变其他测试预期。
 
-生成的模拟订阅配置（111 条规则、47 个规则集）通过官方 Mihomo v1.19.32 的 `-t` 校验，规则集文件全部实际下载。官方发布包 SHA-256 与 GitHub release digest 一致。两处国外 IP DoH 经 Bettbox、两处国内 IP DoH 直连均返回 HTTP 200，TLS 证书校验通过。这些结果不代替应用更新后的全机泄漏测试。
+生成的模拟订阅配置通过官方 Mihomo v1.19.32 的 `-t` 校验。此前发布中核验过该内核发布包的 SHA-256，以及两处国外 IP DoH 经 Bettbox、两处国内 IP DoH 直连的 HTTPS 连通性。这些结果不代替应用更新后的全机泄漏测试。
 
 ## 参考
 
