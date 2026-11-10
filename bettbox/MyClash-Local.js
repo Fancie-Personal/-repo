@@ -1909,7 +1909,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
 
   const dns = {
     enable: true,
-    ipv6: true,
+    ipv6: false,
     'use-hosts': true,
     'cache-algorithm': 'arc',
     'prefer-h3': false,
@@ -2032,7 +2032,8 @@ function main(config) {
   newConfig['hosts'] = hosts;
   newConfig['mixed-port'] = 7890;
   newConfig['allow-lan'] = true;
-  newConfig['ipv6'] = true;
+  // TUN 模式下同时下发 IPv4/IPv6 两个 DNS 会让系统解析每次空等 5-6 秒；关掉 IPv6 让适配器只拿到 198.18.0.2。
+  newConfig['ipv6'] = false;
   newConfig['mode'] = 'rule';
   newConfig['log-level'] = 'info';
   newConfig['bind-address'] = '*';
