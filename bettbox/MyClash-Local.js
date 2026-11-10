@@ -71,8 +71,21 @@ const ruleOptionsEnable = {
   链式代理: false, // 是否启用链式代理（自定义节点作为落地节点，经“链式中转”策略组中转）
 };
 
+// 微信桌面端和媒体 CDN 走本地网络，上传不会绕行海外节点。
+const wechatDirectDomains = [
+  'qpic.cn', 'qlogo.cn', 'weixin.qq.com', 'wx.qq.com', 'wxs.qq.com',
+  'wechat.com', 'weixin.com', 'servicewechat.com', 'weixinbridge.com',
+  'wx.gtimg.com', 'wxapp.tc.qq.com', 'vweixinf.tc.qq.com',
+  'vweixinthumb.tc.qq.com', 'up-hl.3g.qq.com', 'yun-hl.3g.qq.com',
+];
+
 // 定义前置规则
 const prefixRules = [
+  'PROCESS-PATH-REGEX,^(/System/Volumes/Data)?/Applications/WeChat[.]app/,DIRECT',
+  'PROCESS-NAME,WeChat.exe,DIRECT',
+  'PROCESS-NAME,Weixin.exe,DIRECT',
+  ...wechatDirectDomains.map((domain) => `DOMAIN-SUFFIX,${domain},DIRECT`),
+
   // 私有网络直连
   'RULE-SET,private,直连',
 
@@ -1913,8 +1926,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       'rule-set:cn',
       ...(minimalModeEnabled ? [] : ruleOptionsEnable['FCM'] ? ['rule-set:googlefcm'] : []),
       '+.qq.com',
-      '+.weixin.qq.com',
-      '+.wechat.com',
+      ...wechatDirectDomains.map((domain) => `+.${domain}`),
       '+.tencent.com',
       '+.tenpay.com',
       '+.microsoft.com',
@@ -1951,6 +1963,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     // 直连域名使用国内 DoH；不混入 system 或明文 DNS，以免额外泄露或受本机 DNS 接管影响。
     'nameserver-policy': {
       ...nodeDomainPolicy,
+      ...Object.fromEntries(wechatDirectDomains.map((domain) => [`+.${domain}`, chinaDohDNS])),
       'rule-set:private': chinaDohDNS,
       'rule-set:douyin': chinaDohDNS,
       'rule-set:cn': chinaDohDNS,
