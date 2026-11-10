@@ -2068,8 +2068,6 @@ function main(config) {
     'auto-redirect': true,
     'auto-detect-interface': true,
     'dns-hijack': ['any:53', 'tcp://any:53'],
-    // 不建 IPv6 地址：否则 TUN 适配器会多下发一个 IPv6 DNS，Windows 冷解析每次空等约 11 秒。
-    'inet6-address': [],
   };
 
   newConfig['proxies'] = [...mappedProxies, ...customProxies, ...directProxies];
