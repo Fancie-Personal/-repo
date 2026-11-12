@@ -79,8 +79,15 @@ const wechatDirectDomains = [
   'vweixinthumb.tc.qq.com', 'up-hl.3g.qq.com', 'yun-hl.3g.qq.com',
 ];
 
+// Kryptex 的各地区矿池直连；不包含 kryptex.com 网站和账号服务。
+const miningDirectDomains = ['kryptex.network'];
+
 // 定义前置规则
 const prefixRules = [
+  // 放在 Crypto 和国外规则集之前；矿工进程规则也覆盖开发者费用连接。
+  ...miningDirectDomains.map((domain) => `DOMAIN-SUFFIX,${domain},DIRECT`),
+  'PROCESS-NAME,SRBMiner-MULTI.exe,DIRECT',
+
   'PROCESS-PATH-REGEX,^(/System/Volumes/Data)?/Applications/WeChat[.]app/,DIRECT',
   'PROCESS-NAME,WeChat.exe,DIRECT',
   'PROCESS-NAME,Weixin.exe,DIRECT',
@@ -1927,6 +1934,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
       ...(minimalModeEnabled ? [] : ruleOptionsEnable['FCM'] ? ['rule-set:googlefcm'] : []),
       '+.qq.com',
       ...wechatDirectDomains.map((domain) => `+.${domain}`),
+      ...miningDirectDomains.map((domain) => `+.${domain}`),
       '+.tencent.com',
       '+.tenpay.com',
       '+.microsoft.com',
@@ -1963,6 +1971,7 @@ function buildDnsAndHostsConfig(config, filteredProxies) {
     // 直连域名使用国内 DoH；不混入 system 或明文 DNS，以免额外泄露或受本机 DNS 接管影响。
     'nameserver-policy': {
       ...nodeDomainPolicy,
+      ...Object.fromEntries(miningDirectDomains.map((domain) => [`+.${domain}`, chinaDohDNS])),
       ...Object.fromEntries(wechatDirectDomains.map((domain) => [`+.${domain}`, chinaDohDNS])),
       'rule-set:private': chinaDohDNS,
       'rule-set:douyin': chinaDohDNS,

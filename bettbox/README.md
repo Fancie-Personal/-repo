@@ -29,6 +29,8 @@ TUN 保持 `strict-route: true`，并劫持 UDP/TCP 53。Windows 严格路由用
 
 ## 使用与核验
 
+Kryptex 矿池域名 `kryptex.network`（含香港、美国等地区节点）以及 `SRBMiner-MULTI.exe` 进程优先直连。矿池域名排除 Fake-IP，并使用直连国内 DoH 解析；Kryptex 网站和账号域名不受这条域名例外影响。同步脚本并重新应用订阅后，已有矿池连接需重新连接，才能验证新规则。
+
 在 Bettbox 同步 `MyClash-Local` 后重新应用订阅；关闭 DNS 覆写，避免向 nameserver 追加系统 DNS。原有 TUN 访问控制按游戏/加速器需求保留。
 
 同步地址：`https://cdn.jsdelivr.net/gh/Fancie-Personal/-repo@main/bettbox/MyClash-Local.js`。CDN 有缓存时可用 GitHub Raw，或将 `main` 换成所需提交 SHA。

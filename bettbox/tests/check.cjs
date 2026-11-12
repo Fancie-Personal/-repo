@@ -113,5 +113,20 @@ test('both QUIC settings keep valid DNS and rule providers', () => {
   assert(enabled.rules.some(rule => rule.includes('(DST-PORT,443)') && rule.includes('(RULE-SET,cn)')));
   assert(!disabled.rules.some(rule => rule.includes('(DST-PORT,443)')));
 });
+test('mining routes precede Crypto and catch-all rules in full and minimal modes', () => {
+  for (const options of [{}, { 极简国内外分流模式: true }]) {
+    const cfg = run(seed(), options);
+    references(cfg);
+    assert.deepEqual(cfg.rules.slice(0, 2), [
+      'DOMAIN-SUFFIX,kryptex.network,DIRECT',
+      'PROCESS-NAME,SRBMiner-MULTI.exe,DIRECT',
+    ]);
+    assert(cfg.dns['fake-ip-filter'].includes('+.kryptex.network'));
+    assert.deepEqual(cfg.dns['nameserver-policy']['+.kryptex.network'], cfg.dns['direct-nameserver']);
+    assert(!cfg.rules.includes('DOMAIN-SUFFIX,kryptex.com,DIRECT'));
+    assert(!cfg.rules.some(rule => rule.startsWith('DST-PORT,7048,')));
+  }
+});
+
 if (process.argv[2]) fs.writeFileSync(process.argv[2], JSON.stringify(run(), null, 2));
 console.log(`${count} checks passed`);
