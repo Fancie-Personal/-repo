@@ -136,6 +136,35 @@ test('native WeChat IP-only uploads bypass QUIC and overseas rules', () => {
     references(cfg);
   }
 });
+test('upstream priority: local exceptions, ads, domestic domains, domestic IP, service IP', () => {
+  const cfg = run();
+  const position = rule => { const at = cfg.rules.indexOf(rule); assert(at >= 0, rule); return at; };
+  const ads = position('RULE-SET,category-ads,AdBlock');
+  assert(position('PROCESS-NAME,WeChat,DIRECT') < ads);
+  assert(position('DOMAIN-SUFFIX,kryptex.network,DIRECT') < ads);
+  assert(position('PROCESS-NAME,javaw.exe,直连') < ads);
+  assert(position('RULE-SET,private,直连') < ads);
+  assert(ads < position('RULE-SET,geolocation-cn,直连'));
+  assert(position('RULE-SET,cn_ip,直连') < position('RULE-SET,google_ip,Google'));
+  assert(position('RULE-SET,private_ip,直连') < position('RULE-SET,google_ip,Google'));
+  assert(!run(seed(), { AdBlock: false }).rules.includes('RULE-SET,category-ads,AdBlock'));
+});
+test('upstream probes: timeout 5s, automatic-only interval and manual-first ordering', () => {
+  const cfg = run();
+  for (const group of cfg['proxy-groups']) {
+    assert.equal(group.timeout, 5000);
+    if (group.type === 'select') {
+      assert(!Object.hasOwn(group, 'interval'));
+      assert(!Object.hasOwn(group, 'lazy'));
+    } else {
+      assert.equal(group.interval, 600);
+      assert.equal(group.lazy, true);
+    }
+  }
+  const manual = cfg['proxy-groups'].findIndex(g => g.name.includes('美国') && g.type === 'select');
+  const auto = cfg['proxy-groups'].findIndex(g => g.name.includes('美国') && g.type === 'url-test');
+  assert(manual >= 0 && auto > manual);
+});
 test('mining routes precede Crypto and catch-all rules in full and minimal modes', () => {
   for (const options of [{}, { 极简国内外分流模式: true }]) {
     const cfg = run(seed(), options);
