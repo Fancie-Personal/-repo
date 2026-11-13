@@ -113,6 +113,29 @@ test('both QUIC settings keep valid DNS and rule providers', () => {
   assert(enabled.rules.some(rule => rule.includes('(DST-PORT,443)') && rule.includes('(RULE-SET,cn)')));
   assert(!disabled.rules.some(rule => rule.includes('(DST-PORT,443)')));
 });
+test('native WeChat IP-only uploads bypass QUIC and overseas rules', () => {
+  for (const options of [{}, { 极简国内外分流模式: true }]) {
+    const cfg = run(seed(), options);
+    assert.equal(cfg['find-process-mode'], 'always');
+    const quic = cfg.rules.findIndex(rule => rule.includes('(DST-PORT,443)'));
+    const overseas = cfg.rules.indexOf('RULE-SET,geolocation-!cn,默认代理');
+    for (const process of ['WeChat', 'WeChatHelper', 'WeChatAppEx', 'Weixin', 'WeChat.exe', 'Weixin.exe']) {
+      const at = cfg.rules.indexOf(`PROCESS-NAME,${process},DIRECT`);
+      assert(at >= 0 && at < quic && at < overseas, process);
+    }
+    const rule = cfg.rules.find(rule => rule.startsWith('PROCESS-PATH-REGEX,'));
+    const pattern = new RegExp(rule.split(',')[1]);
+    assert(pattern.test('/Applications/WeChat.app/Contents/MacOS/WeChat'));
+    assert(pattern.test('/Users/test/Applications/Weixin.app/Contents/MacOS/Weixin'));
+    assert(!pattern.test('/Applications/Unrelated.app/Contents/MacOS/WeChat'));
+    for (const domain of ['qpic.cn', 'qlogo.cn', 'weixin.qq.com', 'wxapp.tc.qq.com']) {
+      assert(cfg.rules.indexOf(`DOMAIN-SUFFIX,${domain},DIRECT`) < quic);
+      assert(cfg.dns['fake-ip-filter'].includes(`+.${domain}`));
+      assert.deepEqual(cfg.dns['nameserver-policy'][`+.${domain}`], cfg.dns['direct-nameserver']);
+    }
+    references(cfg);
+  }
+});
 test('mining routes precede Crypto and catch-all rules in full and minimal modes', () => {
   for (const options of [{}, { 极简国内外分流模式: true }]) {
     const cfg = run(seed(), options);

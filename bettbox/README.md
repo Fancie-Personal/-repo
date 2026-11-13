@@ -53,3 +53,9 @@ Kryptex 矿池域名 `kryptex.network`（含香港、美国等地区节点）以
 - [Mihomo TUN 官方文档](https://wiki.metacubex.one/config/inbound/tun/)：DNS 劫持与 Windows strict-route 的能力边界。
 
 保留上游 MIT 版权；原始快照版权归 AIsouler/MyClash 作者所有。
+
+## 微信原生上传兼容（2026-11-13）
+
+微信主进程及 `WeChatHelper`、`WeChatAppEx` 以进程名优先直连，并保留整个微信应用包的路径规则（支持系统和用户 Applications 目录）。脚本将 `find-process-mode` 设为 `always`，为没有域名的 IP 连接提供进程匹配；微信规则先于 QUIC 拦截和海外兜底。客户端后续覆写若设为 `off`，进程规则仍会失效，应核对最终生效配置。
+
+现有微信域名直连、国内加密 DNS 和 Fake-IP 排除保留。更改不会让其他进程的全部流量直连；强制进程识别可能增加少量查询开销。同步、重新应用后，由用户重发失败图片验证，不将脚本校验通过等同于实际上传恢复。回退时撤销本次微信进程兼容提交并重新同步，保留之后无关提交。

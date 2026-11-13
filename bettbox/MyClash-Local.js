@@ -88,7 +88,12 @@ const prefixRules = [
   ...miningDirectDomains.map((domain) => `DOMAIN-SUFFIX,${domain},DIRECT`),
   'PROCESS-NAME,SRBMiner-MULTI.exe,DIRECT',
 
-  'PROCESS-PATH-REGEX,^(/System/Volumes/Data)?/Applications/WeChat[.]app/,DIRECT',
+  // 原生上传可能只有目标 IP；进程名兜底不依赖媒体域名或安装路径。
+  'PROCESS-NAME,WeChat,DIRECT',
+  'PROCESS-NAME,WeChatHelper,DIRECT',
+  'PROCESS-NAME,WeChatAppEx,DIRECT',
+  'PROCESS-NAME,Weixin,DIRECT',
+  'PROCESS-PATH-REGEX,^(/System/Volumes/Data)?/(Applications|Users/[^/]+/Applications)/(WeChat|Weixin)[.]app/,DIRECT',
   'PROCESS-NAME,WeChat.exe,DIRECT',
   'PROCESS-NAME,Weixin.exe,DIRECT',
   ...wechatDirectDomains.map((domain) => `DOMAIN-SUFFIX,${domain},DIRECT`),
@@ -2049,7 +2054,8 @@ function main(config) {
   newConfig['unified-delay'] = true;
   newConfig['tcp-concurrent'] = true;
   newConfig['keep-alive-interval'] = 60;
-  newConfig['find-process-mode'] = 'strict';
+  // 微信的 IP 直连上传也需要可靠获取进程信息；不由 strict 自动判断。
+  newConfig['find-process-mode'] = 'always';
 
   newConfig['external-controller'] = '127.0.0.1:9090';
   newConfig['external-ui'] = 'ui';
